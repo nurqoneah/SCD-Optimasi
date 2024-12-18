@@ -2,3 +2,4 @@ osmnx
 folium
 gurobipy
 streamlit_folium 
+openpyxlx`

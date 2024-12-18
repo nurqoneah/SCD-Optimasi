@@ -16,7 +16,6 @@ if site_file is not None and scd_file is not None:
     # Membaca data dari file yang diunggah
     site_data = pd.read_excel(site_file) if site_file.name.endswith('.xlsx') else pd.read_csv(site_file)
     scd_data = pd.read_excel(scd_file) if scd_file.name.endswith('.xlsx') else pd.read_csv(scd_file)
-    print(scd_data)
 
     # Memilih kolom yang relevan dari file Site
     to_column = st.sidebar.selectbox("Pilih Kolom untuk TO", site_data.columns)
