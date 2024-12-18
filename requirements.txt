@@ -1,6 +1,6 @@
 osmnx
 folium
 gurobipy
-streamlit_folium 
-openpyxlx
+streamlit_folium
 openpyxl
+
