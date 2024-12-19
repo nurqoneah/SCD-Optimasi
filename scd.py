@@ -156,7 +156,8 @@ if site_file is not None and scd_file is not None:
         ).add_to(mymap)
 
     # Membuat graph jalan dengan OSMNX
-    G = ox.graph_from_bbox(0.8, 0.3, 102.9, 102.5, network_type="drive")
+    G = ox.graph_from_bbox(north=0.8, south=0.3, east=102.9, west=102.5, network_type="drive")
+
 
     # Menambahkan rute ke peta
     for alloc in selected_sites:
