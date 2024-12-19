@@ -3,4 +3,8 @@ folium
 gurobipy
 streamlit_folium
 openpyxl
+networkx
+numpy
+geopandas
+shapely
 
