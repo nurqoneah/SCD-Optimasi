@@ -155,8 +155,14 @@ if site_file is not None and scd_file is not None:
             icon=folium.Icon(color='red', icon='cloud')
         ).add_to(mymap)
 
-    # Membuat graph jalan dengan OSMNX
-    G = ox.graph_from_bbox(north=0.8, south=0.3, east=102.9, west=102.5, network_type="drive")
+    # Membuat graph jalan dengan OSMN
+    north = float(0.8)
+    south = float(0.3)
+    east = float(102.9)
+    west = float(102.5)
+
+    G = ox.graph_from_bbox(north=north, south=south, east=east, west=west, network_type="drive")
+    # G = ox.graph_from_bbox(north=0.8, south=0.3, east=102.9, west=102.5, network_type="drive")
 
 
     # Menambahkan rute ke peta
