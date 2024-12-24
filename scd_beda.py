@@ -6,6 +6,8 @@ from streamlit_folium import st_folium
 import streamlit as st
 import gurobipy as gp
 from gurobipy import GRB
+ox.settings.use_cache = False
+
 
 # Sidebar untuk input file dan pengaturan
 st.sidebar.title("Pengaturan Input")

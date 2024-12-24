@@ -7,4 +7,5 @@ networkx
 numpy
 geopandas
 shapely
+requests
 
