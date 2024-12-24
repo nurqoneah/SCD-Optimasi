@@ -53,8 +53,13 @@ if site_file is not None and scd_file is not None:
 
     # Model Gurobi Setup (seperti yang Anda buat sebelumnya)
     N = len(site_data)  # Jumlah site
-    S = st.sidebar.number_input("Jumlah Home Base", min_value=1, max_value=10, value=8) 
-    K = st.sidebar.number_input("Jumlah SCD per Home Base", min_value=1, max_value=10, value=1) 
+    S = st.sidebar.number_input("Jumlah Home Base", min_value=1, max_value=25, value=3)  # Total Home Base
+    scd_counts = []
+    for j in range(S):
+        scd_count = st.sidebar.number_input(f"Jumlah SCD untuk Home Base {j+1}", min_value=1, max_value=10, value=1)
+        scd_counts.append(scd_count)
+
+    # K = st.sidebar.number_input("Jumlah SCD per Home Base", min_value=1, max_value=10, value=1) 
 
     # Parameter lainnya
     B = site_data[bbt_time_column].tolist()
@@ -66,7 +71,13 @@ if site_file is not None and scd_file is not None:
     model = gp.Model("Optimasi_Alokasi_Genset")
 
     # Variabel keputusan
-    z = model.addVars(S, K, N, vtype=GRB.BINARY, name="z")
+    # z = model.addVars(S, K, N, vtype=GRB.BINARY, name="z")
+    z = {}
+    for j in range(S):
+        for k in range(scd_counts[j]):
+            for i in range(N):
+                z[j, k, i] = model.addVar(vtype=GRB.BINARY, name=f"z_{j}_{k}_{i}")
+
     y = model.addVars(N, vtype=GRB.BINARY, name="y")
 
     P = [0 if pd.isnull(x) or x in [float('inf'), float('-inf')] else x for x in P]  
@@ -76,27 +87,30 @@ if site_file is not None and scd_file is not None:
 
    # Kendala 1: Site hanya menerima satu genset
     for i in range(N):
-        model.addConstr(gp.quicksum(z[j, k, i] for j in range(S) for k in range(K)) <= 1, name=f"site_constraint_{i}")
+        model.addConstr(gp.quicksum(z[j, k, i] for j in range(S) for k in range(scd_counts[j])) <= 1, name=f"site_constraint_{i}")
+
 
     # Kendala 2: Genset hanya dialokasikan ke satu site
     for j in range(S):
-        for k in range(K):
-            model.addConstr(gp.quicksum(z[j, k, i] for i in range(N)) <= 1, name=f"genset_constraint_{j}_{k}")
+      for k in range(scd_counts[j]):
+          model.addConstr(gp.quicksum(z[j, k, i] for i in range(N)) <= 1, name=f"genset_constraint_{j}_{k}")
+
 
     # Kendala 3: y_i = 1 jika ada genset dialokasikan ke site i
     for i in range(N):
-        model.addConstr(y[i] <= gp.quicksum(z[j, k, i] for j in range(S) for k in range(K)), name=f"y_constraint_{i}")
+        model.addConstr(y[i] <= gp.quicksum(z[j, k, i] for j in range(S) for k in range(scd_counts[j])), name=f"y_constraint_{i}")
+
 
     # Kendala 4: Genset dialokasikan jika PLN Down Time > Bbt Time
     for j in range(S):
-        for k in range(K):
+        for k in range(scd_counts[j]):
             for i in range(N):
                 if D[i] <= B[i]:
                     model.addConstr(z[j, k, i] == 0, name=f"pln_constraint_{j}_{k}_{i}")
 
     # Kendala 5: Alokasi genset hanya ke site dengan T_SCD <= Pln Down Time dan <= Bbt Time
     for j in range(S):
-        for k in range(K):
+        for k in range(scd_counts[j]):
             for i in range(N):
                 if T[i, j] > D[i] or T[i, j] > B[i]:  # Tambahkan kondisi T_SCD > Bbt Time
                     model.addConstr(z[j, k, i] == 0, name=f"time_constraint_{j}_{k}_{i}")
@@ -111,20 +125,22 @@ if site_file is not None and scd_file is not None:
     if model.status == GRB.OPTIMAL:
         st.success("Solusi Optimal Ditemukan!")
         for i in range(N):
-            if y[i].x > 0.5:  # Jika site mendapatkan genset
+            if y[i].x > 0.5:
                 allocated_gensets = [
-                    (j, k) for j in range(S) for k in range(K) if z[j, k, i].x > 0.5
+                    (j, k) for j in range(S) for k in range(scd_counts[j]) if z[j, k, i].x > 0.5
                 ]
                 for j, k in allocated_gensets:
                     selected_sites.append({
                         "site_id": site_data['site_id'][i],
-                        "scd_id": j + 1
+                        "scd_id": j + 1,
+                        "scd_index": k + 1
                     })
                     st.write(
-                        f"Site {site_data['site_id'][i]} disuplai oleh T_SCD_{j + 1}"
+                        f"Site {site_data['site_id'][i]} disuplai oleh T_SCD_{j + 1}, SCD Index {k + 1}"
                     )
     else:
         st.warning("Tidak ada solusi optimal.")
+
 
     # Menampilkan hasil alokasi
     st.write("Hasil Alokasi Genset:", selected_sites)
