@@ -1,4 +1,4 @@
-osmnx
+osmnx==1.9.4
 folium
 gurobipy
 streamlit_folium
